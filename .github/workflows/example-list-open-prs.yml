@@ -1,0 +1,64 @@
+# Example workflow showing how to use the ListOpenPullRequests action
+
+name: List Open Pull Requests Example
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Run daily at 9 AM UTC
+    - cron: '0 9 * * *'
+
+jobs:
+  list-open-prs:
+    runs-on: ubuntu-latest
+    name: List Open Pull Requests
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: List Open Pull Requests (Table format)
+        id: list-prs-table
+        uses: ./Actions/ListOpenPullRequests
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          outputFormat: 'table'
+
+      - name: List Open Pull Requests (JSON format)
+        id: list-prs-json
+        uses: ./Actions/ListOpenPullRequests
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          outputFormat: 'json'
+
+      - name: Process PR count
+        run: |
+          echo "Found ${{ steps.list-prs-table.outputs.pr-count }} open pull requests"
+          
+          # Example of conditional logic based on PR count
+          if [[ "${{ steps.list-prs-table.outputs.pr-count }}" -gt "10" ]]; then
+            echo "::warning::High number of open pull requests detected!"
+          fi
+
+      - name: List PRs for specific repository
+        uses: ./Actions/ListOpenPullRequests
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: 'microsoft/AL-Go'
+          outputFormat: 'list'
+
+  # Example of using the action without authentication (public repos only)
+  list-public-prs:
+    runs-on: ubuntu-latest
+    name: List Public Repository PRs
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: List Open Pull Requests (Public repo, no auth)
+        uses: ./Actions/ListOpenPullRequests
+        with:
+          repository: 'microsoft/vscode'
+          outputFormat: 'table'
+        continue-on-error: true  # In case of rate limiting
