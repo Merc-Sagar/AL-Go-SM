@@ -1,0 +1,43 @@
+name: 'List Open Pull Requests'
+author: Microsoft Corporation
+inputs:
+  shell:
+    description: Shell in which you want to run the action (powershell or pwsh)
+    required: false
+    default: powershell
+  token:
+    description: GitHub token for API authentication
+    required: false
+    default: ''
+  repository:
+    description: Repository in the format 'owner/repo' (default is current repository)
+    required: false
+    default: ''
+  outputFormat:
+    description: Output format - 'table', 'json', or 'list' (default is table)
+    required: false
+    default: 'table'
+outputs:
+  pr-count:
+    description: Number of open pull requests found
+    value: ${{ steps.listopenpullrequests.outputs.pr-count }}
+  pr-list:
+    description: JSON array of open pull requests
+    value: ${{ steps.listopenpullrequests.outputs.pr-list }}
+runs:
+  using: composite
+  steps:
+    - name: run
+      shell: ${{ inputs.shell }}
+      id: listopenpullrequests
+      env:
+        _token: ${{ inputs.token }}
+        _repository: ${{ inputs.repository }}
+        _outputFormat: ${{ inputs.outputFormat }}
+      run: |
+        ${{ github.action_path }}/../Invoke-AlGoAction.ps1 -ActionName "ListOpenPullRequests" -Action {
+          ${{ github.action_path }}/ListOpenPullRequests.ps1 -token $ENV:_token -repository $ENV:_repository -outputFormat $ENV:_outputFormat
+        }
+branding:
+  icon: terminal
+  color: blue
